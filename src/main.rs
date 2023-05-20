@@ -1,6 +1,6 @@
-mod chip8;
+mod processor;
 
-use chip8::Core;
+use crate::processor::{Processor, DISPLAY_HEIGHT, DISPLAY_WIDTH};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -8,7 +8,6 @@ use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use std::env;
-use std::time::Duration;
 
 // Keybinds:
 // 1 2 3 4
@@ -16,14 +15,11 @@ use std::time::Duration;
 // A S D F
 // Z X C V
 
-const DISPLAY_WIDTH: usize = 64;
-const DISPLAY_HEIGHT: usize = 32;
-
 fn render_display(display: &[u8; 64 * 32], canvas: &mut Canvas<Window>) {
     let (win_width, win_height) = canvas.window().drawable_size();
 
-    let pixel_width = (win_width as f32 / DISPLAY_WIDTH as f32).round() as u32;
-    let pixel_height = (win_height as f32 / DISPLAY_HEIGHT as f32).round() as u32;
+    let pixel_width = (win_width as f32 / DISPLAY_WIDTH as f32).round() as u16;
+    let pixel_height = (win_height as f32 / DISPLAY_HEIGHT as f32).round() as u16;
 
     canvas.set_draw_color(Color::BLACK);
     canvas.clear();
@@ -32,12 +28,12 @@ fn render_display(display: &[u8; 64 * 32], canvas: &mut Canvas<Window>) {
     for y in 0..DISPLAY_HEIGHT {
         for x in 0..DISPLAY_WIDTH {
             let index = y * DISPLAY_WIDTH + x;
-            if display[index] != 0 {
+            if display[index as usize] != 0 {
                 let rect = Rect::new(
-                    (x * pixel_width as usize) as i32,
-                    (y * pixel_height as usize) as i32,
-                    pixel_width,
-                    pixel_height,
+                    (x * pixel_width) as i32,
+                    (y * pixel_height) as i32,
+                    pixel_width as u32,
+                    pixel_height as u32,
                 );
                 canvas.fill_rect(rect).unwrap();
             }
@@ -65,24 +61,17 @@ fn main() -> Result<(), String> {
     let window = video_subsystem
         .window("CHIP8", 640, 320)
         .position_centered()
-        .resizable()
         .fullscreen_desktop()
         .build()
         .unwrap();
 
-    let mut canvas = window
-        .into_canvas()
-        .accelerated()
-        .build()
-        .map_err(|e| e.to_string())?;
+    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
     let rom_file_path = current_dir.to_str().unwrap_or("");
 
-    let mut emulator = Core::new(rom_file_path);
-    let processor = &mut emulator.processor;
-
+    let mut processor = Processor::new(rom_file_path);
     processor.debug_print();
 
     'running: loop {
@@ -94,7 +83,7 @@ fn main() -> Result<(), String> {
                     ..
                 } => {
                     println!("PROCESSOR STATE AT ROM EXIT:");
-                    emulator.processor.debug_print();
+                    processor.debug_print();
                     break 'running;
                 }
 
@@ -149,7 +138,7 @@ fn main() -> Result<(), String> {
 
         processor.cycle();
         render_display(&processor.display, &mut canvas);
-        std::thread::sleep(Duration::from_micros(200));
+        std::thread::sleep(std::time::Duration::from_micros(200));
     }
 
     Ok(())
