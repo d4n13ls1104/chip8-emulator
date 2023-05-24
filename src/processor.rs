@@ -188,40 +188,12 @@ impl Processor {
     pub fn op_fx0a(&mut self) {
         let vx = &mut self.registers[((self.opcode & 0x0F00) >> 8) as usize];
 
-        if self.keypad[0] {
-            *vx = 0;
-        } else if self.keypad[1] {
-            *vx = 1;
-        } else if self.keypad[2] {
-            *vx = 2;
-        } else if self.keypad[3] {
-            *vx = 3;
-        } else if self.keypad[4] {
-            *vx = 4;
-        } else if self.keypad[5] {
-            *vx = 5;
-        } else if self.keypad[6] {
-            *vx = 6;
-        } else if self.keypad[7] {
-            *vx = 7;
-        } else if self.keypad[8] {
-            *vx = 8;
-        } else if self.keypad[9] {
-            *vx = 9;
-        } else if self.keypad[10] {
-            *vx = 10;
-        } else if self.keypad[11] {
-            *vx = 11;
-        } else if self.keypad[12] {
-            *vx = 12;
-        } else if self.keypad[13] {
-            *vx = 13;
-        } else if self.keypad[14] {
-            *vx = 14;
-        } else if self.keypad[15] {
-            *vx = 15;
-        } else {
-            self.pc -= 2;
+        for i in 0..=15 as u8 {
+            if self.keypad[i as usize] {
+                *vx = i;
+            } else {
+                self.pc -= 2;
+            }
         }
     }
 

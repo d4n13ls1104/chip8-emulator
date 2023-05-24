@@ -59,7 +59,7 @@ fn main() -> Result<(), String> {
     let video_subsystem = sdl_context.video()?;
 
     let window = video_subsystem
-        .window("CHIP8", 640, 320)
+        .window("CHIP8", 0, 0)
         .position_centered()
         .fullscreen_desktop()
         .build()
