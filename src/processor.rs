@@ -191,10 +191,10 @@ impl Processor {
         for i in 0..=15 as u8 {
             if self.keypad[i as usize] {
                 *vx = i;
-            } else {
-                self.pc -= 2;
+                return;
             }
         }
+        self.pc -= 2;
     }
 
     pub fn op_fx07(&mut self) {
