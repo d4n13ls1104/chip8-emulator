@@ -32,8 +32,8 @@ pub struct Processor {
     pub memory: [u8; MEM_SIZE as usize],
     pub registers: [u8; 16],
     pub stack: [u16; 16],
-    pub keypad: [bool; 16],
     pub display: [u8; 64 * 32],
+    pub keypad: u16,
     pub pc: u16,
     pub index: u16,
     pub opcode: u16,
@@ -48,7 +48,7 @@ impl Processor {
             memory: [0u8; MEM_SIZE as usize],
             registers: [0; 16],
             stack: [0; 16],
-            keypad: [false; 16],
+            keypad: 0,
             display: [0u8; 64 * 32],
             index: 0,
             opcode: 0,
@@ -189,7 +189,8 @@ impl Processor {
         let vx = &mut self.registers[((self.opcode & 0x0F00) >> 8) as usize];
 
         for i in 0..=15 as u8 {
-            if self.keypad[i as usize] {
+            let key_pressed = (self.keypad & (1 << i)) > 0;
+            if key_pressed {
                 *vx = i;
                 return;
             }
@@ -205,7 +206,8 @@ impl Processor {
     pub fn op_exa1(&mut self) {
         let vx = self.registers[((self.opcode & 0x0F00) >> 8) as usize];
 
-        if !self.keypad[vx as usize] {
+        let key_pressed = (self.keypad & (1 << vx)) > 0;
+        if !key_pressed {
             self.pc += 2;
         }
     }
@@ -213,7 +215,8 @@ impl Processor {
     pub fn op_ex9e(&mut self) {
         let vx = self.registers[((self.opcode & 0x0F00) >> 8) as usize];
 
-        if self.keypad[vx as usize] {
+        let key_pressed = (self.keypad & (1 << vx)) > 0;
+        if key_pressed {
             self.pc += 2;
         }
     }
@@ -478,12 +481,7 @@ impl Processor {
         println!("Stack Pointer: {:#06X}", self.stack_ptr);
         println!("Delay Timer: {}", self.delay_timer);
         println!("Sound Timer: {}", self.sound_timer);
-        println!("Keypad:");
-        print!("[");
-        for r in self.keypad {
-            print!("{}", if r { 1 } else { 0 });
-        }
-        println!("]");
+        println!("Keypad: {:016b}", self.keypad);
         println!("====================");
     }
 }
